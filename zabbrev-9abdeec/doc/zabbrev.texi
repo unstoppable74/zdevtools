@@ -1,0 +1,169 @@
+\input texinfo
+@c -*- texinfo -*-
+@setfilename zabbrev.info
+@settitle zabbrev Manual
+@documentencoding UTF-8
+@include version.texi
+
+@copying
+This manual is part of @command{zabbrev}.
+Copyright @copyright{} 2025, 2026 Jason Self
+
+@quotation
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 3 of the License, or (at your
+option) any later version.  A copy of the license is included in the
+section entitled ``Copying''.
+@end quotation
+@end copying
+
+@titlepage
+@title zabbrev Manual
+@subtitle Version @value{VERSION}
+@page
+@end titlepage
+
+@ifnottex
+@node Top
+@top zabbrev Manual
+@end ifnottex
+
+This document describes the @command{zabbrev} program which selects
+optimal text abbreviations for Z-machine story files.
+
+@menu
+* Overview::
+* Invoking zabbrev::
+* Copying::
+@end menu
+
+@node Overview
+@chapter Overview
+
+@command{zabbrev} analyzes text for repeated patterns and suggests
+abbreviations that reduce the size of Z-machine story data.  The input
+is a directory of @file{.zap} files produced by a ZIL compiler, or an
+Inform6 @file{gametext.txt} file, or text extracted using txd and
+infodump.  The program outputs a list of abbreviations and reports the
+resulting storage savings.
+
+@node Invoking zabbrev
+@chapter Invoking zabbrev
+
+The general syntax is:
+@example
+zabbrev [@var{options}] [@var{path-to-game}]
+@end example
+
+When @var{path-to-game} is omitted the program uses the current
+directory.  If neither @file{gametext.txt} nor any @file{*.zap} files
+are present, the usage message is displayed and the program exits.
+The following options are available:
+
+@table @option
+@item -a, -A, --alphabet
+Create a tailor-made alphabet for this game and use it as basis for
+the abbreviations (Z-machine version 5 and later only).
+
+@item --a0 @var{str}
+Define 26 characters for alphabet A0.
+
+@item --a1 @var{str}
+Define 26 characters for alphabet A1.
+
+@item --a2 @var{str}
+Define 23 characters for alphabet A2.
+
+@item -b, --throwback
+Throw all abbreviations that have lower score than last pick back on
+the heap.  This only occasionally improves the result.
+
+@item --c0
+Text character set is plain ASCII only.
+
+@item --cu
+Text character set is UTF-8.
+
+@item --c1
+Text character set is ISO 8859-1 (Latin1).
+
+@item --debug
+Print debug information.
+
+@item -h, --help
+Show usage information and exit.
+
+@item -i, --inform
+Generate Inform6-style output.  This requires that the file
+@file{gametext.txt} is in the game path.  Implies @option{--r3}.
+
+@item --infodump @var{file}
+Use text extracted from a compiled file with Infodump.  Always used in
+conjunction with the @option{--txd} switch.
+
+@item -n, --number @var{num}
+Number of abbreviations to generate.  The default is @code{96}.
+
+@item -o, --output @var{fmt}
+Select output format.  @var{fmt} may be @code{0} or @code{input}
+(default), @code{1} or @code{inform}, or @code{2} or @code{zap}.
+
+@item --onlyrefactor
+Skip calculation of abbreviations and only print information about
+duplicate long strings.
+
+@item -q, --quiet, --silent
+Do not print the startup banner or progress output.
+
+@item --r3
+Force rounding to 3 for fast and deep rounding.  Normally rounding
+to 6 is used for strings stored in high memory for Z-machine version 4
+and later.
+
+@item --txd @var{file}
+Use text extracted from a compiled file with txd.  Always used in
+conjunction with the @option{--infodump} switch.
+
+@item -v, --verbose
+Print extra information.
+
+@item --version
+Display the program version and exit.
+
+@item -x0
+Fastest compression.  Pick abbreviations according to highest score
+with R.A.@: Wagner's optimal parse method.
+
+@item -x1
+Fast compression.  x0 plus adding and removing initial and trailing
+characters for better Z-character rounding.
+
+@item -x2 [@var{n}]
+Normal compression (default).  x1 plus testing up to @var{n}
+(default 10,000) discarded abbreviation variants for better
+Z-character rounding.
+
+@item -x3 [@var{n1}] [@var{n2}]
+Maximum compression.  x2 plus testing @var{n2} (default 1,000)
+discarded abbreviations as all possible replacements for better
+Z-character rounding.
+@end table
+
+Z-machine version options: @option{-v1} through @option{-v8}.
+
+@itemize @bullet
+@item
+v1--v3: Round to 3 for high strings
+@item
+v4--v7: Round to 6 for high strings
+@item
+v8: Round to 12 for high strings
+@end itemize
+
+@node Copying
+@appendix Copying
+
+@verbatiminclude ../COPYING
+
+@bye

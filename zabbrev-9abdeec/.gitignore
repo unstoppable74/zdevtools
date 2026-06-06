@@ -1,0 +1,64 @@
+# Autotools generated files
+/Makefile
+/Makefile.in
+/aclocal.m4
+/autom4te.cache/
+/compile
+/config.h
+/config.h.in
+/config.log
+/config.status
+/config.guess
+/config.sub
+/configure
+/depcomp
+/install-sh
+/libtool
+/ltmain.sh
+/missing
+/build-aux/
+/stamp-h1
+
+# Build directories
+/.deps/
+/.libs/
+
+src/Makefile.in
+src/Makefile
+src/.deps/
+src/.libs/
+src/*.o
+src/*.lo
+src/zabbrev
+
+# Documentation build artifacts
+doc/Makefile.in
+doc/Makefile
+doc/.deps/
+doc/.libs/
+doc/*.info*
+doc/texinfo.tex
+
+doc/mdate-sh
+doc/stamp-vti
+doc/version.texi
+
+test-driver
+
+tests/Makefile.in
+tests/Makefile
+tests/.deps/
+tests/.libs/
+tests/*.o
+tests/*.lo
+tests/*.log
+tests/*.trs
+tests/test-suite.log
+
+# Generated archives
+*.tar
+*.tar.*
+
+# Generic editor backup files
+*~
+*.swp

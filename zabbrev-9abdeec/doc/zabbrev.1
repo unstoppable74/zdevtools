@@ -1,0 +1,121 @@
+.TH ZABBREV 1 "" "" "User Commands"
+.SH NAME
+zabbrev \- select optimal text abbreviations for Z-machine story files
+.SH SYNOPSIS
+.B zabbrev
+\fI[OPTIONS]\fR [\fIPATH\-TO\-GAME\fR]
+.SH DESCRIPTION
+The \fBzabbrev\fR utility analyzes text for repeated patterns and
+suggests abbreviations that can reduce the size of Z-machine story data.
+It reads \fB.zap\fR files produced by a ZIL compiler, or
+\fBgametext.txt\fR from Inform6, or text extracted with txd/infodump.
+When \fIPATH\-TO\-GAME\fR is omitted the program uses the current
+directory.  If no \fB.zap\fR files or \fBgametext.txt\fR are found,
+the usage message is shown and the program exits.
+.SH OPTIONS
+.TP
+.B \-a, \-A, \-\-alphabet
+Create a tailor-made alphabet for this game and use it as basis for
+the abbreviations (Z-machine version 5 and later only).
+.TP
+.B \-\-a0 \fISTRING\fR
+Define 26 characters for alphabet A0.
+.TP
+.B \-\-a1 \fISTRING\fR
+Define 26 characters for alphabet A1.
+.TP
+.B \-\-a2 \fISTRING\fR
+Define 23 characters for alphabet A2.
+.TP
+.B \-b, \-\-throwback
+Throw all abbreviations that have lower score than last pick back on
+the heap.  This only occasionally improves the result.
+.TP
+.B \-\-c0
+Text character set is plain ASCII only.
+.TP
+.B \-\-cu
+Text character set is UTF-8.
+.TP
+.B \-\-c1
+Text character set is ISO 8859-1 (Latin1).
+.TP
+.B \-\-debug
+Print debug information.
+.TP
+.B \-h, \-\-help
+Show usage information and exit.
+.TP
+.B \-i, \-\-inform
+Generate Inform6-style output.  This requires that the file
+\fBgametext.txt\fR is in the game path.  Implies \fB\-\-r3\fR.
+.TP
+.B \-\-infodump \fIFILE\fR
+Use text extracted from a compiled file with Infodump.  Always used in
+conjunction with the \fB\-\-txd\fR switch.
+.TP
+.B \-n, \-\-number \fINUM\fR
+Number of abbreviations to generate (default 96).
+.TP
+.B \-o, \-\-output \fIFORMAT\fR
+Select output format.  \fIFORMAT\fR may be \fB0\fR or \fBinput\fR (default),
+\fB1\fR or \fBinform\fR, or \fB2\fR or \fBzap\fR.
+.TP
+.B \-\-onlyrefactor
+Skip calculation of abbreviations and only print information about
+duplicate long strings.
+.TP
+.B \-q, \-\-quiet, \-\-silent
+Do not print the startup banner or progress output.
+.TP
+.B \-\-r3
+Force rounding to 3 for fast and deep rounding.  Normally rounding
+to 6 is used for strings stored in high memory for Z-machine version 4
+and later.
+.TP
+.B \-\-txd \fIFILE\fR
+Use text extracted from a compiled file with txd.  Always used in
+conjunction with the \fB\-\-infodump\fR switch.
+.TP
+.B \-v, \-\-verbose
+Print extra information.
+.TP
+.B \-\-version
+Display the program version and exit.
+.TP
+.B \-x \fILEVEL\fR
+Set compression level (0\-3, default 2).
+.TP
+.B \-x0
+Fastest compression.  Pick abbreviations according to highest score
+with R.A.\& Wagner's optimal parse method.
+.TP
+.B \-x1
+Fast compression.  x0 plus adding and removing initial and trailing
+characters for better Z-character rounding.
+.TP
+.B \-x2 [\fIn\fR]
+Normal compression (default).  x1 plus testing up to \fIn\fR
+(default 10\|000) discarded abbreviation variants for better
+Z-character rounding.
+.TP
+.B \-x3 [\fIn1\fR] [\fIn2\fR]
+Maximum compression.  x2 plus testing \fIn2\fR (default 1\|000)
+discarded abbreviations as all possible replacements for better
+Z-character rounding.
+.PP
+Z-machine version options: \fB\-v1\fR through \fB\-v8\fR
+.RS 4
+v1\-v3: Round to 3 for high strings
+.br
+v4\-v7: Round to 6 for high strings
+.br
+v8: Round to 12 for high strings
+.RE
+.SH "SEE ALSO"
+The Texinfo manual \fIzabbrev.texi\fR contains complete documentation.
+.SH BUGS
+Report bugs to: <https://github.com/36bit/zabbrev/issues>
+.SH COPYRIGHT
+Copyright \(co 2025, 2026 Jason Self <j@jxself.org>
+Licensed under the GNU GPL version 3 or later.

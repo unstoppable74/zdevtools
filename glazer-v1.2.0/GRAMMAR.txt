@@ -1,0 +1,127 @@
+
+GRAMMAR OF ASSEMBLY FILES
+=========================
+
+Comments
+--------
+
+Comments begin with a semicolon (`;`) and extend to the
+end of the line.  They may occur by themselves, or after
+a normal line of assembly.
+
+
+Code Lines
+----------
+
+file        := { code_line }
+
+code_line   := BLANK
+            |  { label } [ instruction ]
+            |  const_def
+            |  directive
+
+label       := IDENT ':'
+
+const_def   := IDENT '=' expr
+
+directive   := 'section' IDENT
+            |  'include' STRING
+            |  'global'  IDENT [ '=' expr ]
+            |  'release' NUMBER [ STRING ]
+
+instruction := normal_inst
+            |  local_def
+            |  data
+            |  reserve
+
+local_def   := 'local' IDENT { IDENT }
+
+data        := TODO
+
+reserve     := TODO
+
+normal_inst := inst_name { load_op } [ '->' store_op { store_op } ] [ jump_dest ]
+
+inst_name   := IDENT
+
+jump_dest   := [ 'fail' ] '->' IDENT
+
+load_op     := common_op
+            |  'pop'
+
+store_op    := common_op
+            |  'push'
+            |  'drop'
+            |  'rfalse'
+            |  'rtrue'
+
+common_op   := value
+            |  local
+            |  memory
+            |  hilo
+
+memory      := '[' expr ']'
+
+hilo        := 'hilo' value
+
+value       := NUMBER
+            |  CHAR
+            |  STRING
+            |  IDENT
+            |  complex_str
+            |  '(' expr ')'
+
+complex_str := '{' { huff_part } '}'
+
+huff_part   := value
+            |  h_indirect
+
+h_indirect  := '[' huff_addr { value } ']'
+
+huff_addr   := value
+            |  memory
+
+expr        := term { binary term }
+
+term        := { unary } value
+
+binary      := '+'  | '-'  | '*' | '/' | '%'
+            |  '|'  | '&'  | '^'
+            |  '>>' | '<<' | '>>>'
+
+unary       := '+'  | '-'  | '~'
+
+
+Lexical Elements
+----------------
+
+Note that identifiers cannot begin with a digit.
+
+IDENT       := IDENT_CHAR { IDENT_CHAR }
+IDENT_CHAR  := LETTER | DIGIT | '_' | '.'
+
+NUMBER      := [ SIGN ] NUMERIC
+NUMERIC     := DECIMAL | HEX_NUM | BINARY | FLOAT
+SIGN        := '+' | '-'
+
+DECIMAL     :=      DIGIT { DIGIT }
+HEX_NUM     := '0x' DIGIT { DIGIT }
+BINARY      := '0b' DIGIT { DIGIT }
+
+FLOAT       := DECIMAL '.' DECIMAL
+            |  DECIMAL [ '.' DECIMAL ] EXPONENT
+EXPONENT    := 'e' [ SIGN ] DECIMAL
+
+DIGIT       := '0' .. '9'
+            |  'A' .. 'F' (for hex only)
+            |  '_' | single quote
+
+STRING      := '"' { STRING_ELEM } '"'
+CHAR        := '`' { STRING_ELEM } '`'
+
+STRING_ELEM := ESCAPE
+            |  any character
+
+ESCAPE      := '\'   + a symbol character
+            |  '\u{' + hex digits + '}'
+            |  '\n'

@@ -1,0 +1,73 @@
+ZAbbrev (C port)
+================
+
+This repository contains a C implementation of ZAbbrev, a utility for 
+deriving text abbreviations used by the Z-machine. It is based on the 
+original C# version written by Henrik Åsman, which can be found at
+<https://github.com/heasm66/zabbrev>. The C port was created and is
+maintained by Jason Self.
+
+Legal status
+------------
+
+ZAbbrev is free software, distributed under the terms of the GNU 
+General Public License, version 3 or any later version. See the 
+COPYING file for the full license text.
+
+Licensing History Note: At the time the port was created, the upstream 
+C# project was licensed under the GNU General Public License, version 
+3 or (at your option) any later version. On August 23, 2025, the 
+original C# repository was re-licensed under the MIT License. This C 
+port predates that change and continues to be distributed under the 
+original GPLv3-or-later terms.
+
+Requirements
+------------
+
+Building the program requires a standard C toolchain and the GNU 
+Autotools. The following tools must be available:
+
+* gcc or another ISO C compiler
+* autoconf and automake
+* make and a POSIX shell
+
+No additional libraries are needed.
+
+Building
+--------
+
+Run the following commands in the top-level directory:
+
+autoreconf -i
+./configure
+make
+make install # optional, install the program
+
+Documentation
+-------------
+
+A Texinfo manual (doc/zabbrev.texi) and a manual page
+(doc/zabbrev.1) are provided. Use make info or make html to build
+the documentation in various formats.
+
+Resources
+---------
+
+Report bugs to: j@jxself.org
+zabbrev home page: https://jxself.org/git/?p=zabbrev.git
+
+--
+This file is part of ZAbbrev.
+
+ZAbbrev is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+ZAbbrev is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with ZAbbrev. If not, see <https://www.gnu.org/licenses/>.

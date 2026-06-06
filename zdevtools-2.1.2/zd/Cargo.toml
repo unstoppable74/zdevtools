@@ -1,0 +1,16 @@
+[package]
+name = "zd"
+version = "2.0.0"
+authors = ["Chris Spiegel <cspiegel@gmail.com>"]
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4.0.18", features = ["derive", "cargo"] }
+clap-num = "1.0.2"
+hex = "0"
+lazy-regex = "3.0.0"
+thiserror = "1"
+
+[profile.release]
+debug = true

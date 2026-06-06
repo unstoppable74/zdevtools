@@ -1,0 +1,276 @@
+use std::char;
+use std::convert::TryFrom;
+
+use super::{Arg, Branch, Count, Directive, Opcode, StatusType, Variable};
+
+grammar;
+
+match {
+    "add" => add,
+    "and" => and,
+    "branch" => branch,
+    "call_vs" => call_vs,
+    "clear_attr" => clear_attr,
+    "dec" => dec,
+    "dec_chk" => dec_chk,
+    "div" => div,
+    "get_child" => get_child,
+    "get_next_prop" => get_next_prop,
+    "get_parent" => get_parent,
+    "get_prop" => get_prop,
+    "get_prop_addr" => get_prop_addr,
+    "get_prop_len" => get_prop_len,
+    "get_sibling" => get_sibling,
+    "inc" => inc,
+    "inc_chk" => inc_chk,
+    "input_stream" => input_stream,
+    "insert_obj" => insert_obj,
+    "je" => je,
+    "jg" => jg,
+    "jin" => jin,
+    "jl" => jl,
+    "jump" => jump,
+    "jz" => jz,
+    "load" => load,
+    "loadb" => loadb,
+    "loadw" => loadw,
+    "mod" => mod,
+    "mul" => mul,
+    "new_line" => new_line,
+    "nop" => nop,
+    "not" => not,
+    "or" => or,
+    "output_stream" => output_stream,
+    "pop" => pop,
+    "print" => print,
+    "print_addr" => print_addr,
+    "print_char" => print_char,
+    "print_num" => print_num,
+    "print_obj" => print_obj,
+    "print_paddr" => print_paddr,
+    "print_ret" => print_ret,
+    "pull" => pull,
+    "push" => push,
+    "put_prop" => put_prop,
+    "quit" => quit,
+    "random" => random,
+    "read" => read,
+    "remove_obj" => remove_obj,
+    "restart" => restart,
+    "restore" => restore,
+    "ret" => ret,
+    "ret_popped" => ret_popped,
+    "rfalse" => rfalse,
+    "rtrue" => rtrue,
+    "save" => save,
+    "set_attr" => set_attr,
+    "set_window" => set_window,
+    "show_status" => show_status,
+    "sound_effect" => sound_effect,
+    "split_window" => split_window,
+    "store" => store,
+    "storeb" => storeb,
+    "storew" => storew,
+    "sub" => sub,
+    "test" => test,
+    "test_attr" => test_attr,
+    "throw" => throw,
+    "verify" => verify,
+
+    "alabel" => alabel,
+    "align" => align,
+    "byte" => byte,
+    "label" => label,
+    "routine" => routine,
+    "seek" => seek,
+    "seekabs" => seekabs,
+    "seeknop" => seeknop,
+    "seeknopabs" => seeknopabs,
+    "set_global" => set_global,
+    "start" => start,
+    "status" => status,
+    "string" => string,
+
+    "score",
+    "time",
+
+    r"G[0-9a-e][0-9a-f]" => GlobalExp,
+    r"L(0[0-9]|1[0-5])" => LocalExp,
+    r"(?i)sp" => SPExp
+} else {
+    r"[A-Za-z][A-Za-z0-9_]*" => Ident,
+    _
+}
+
+Number: usize = {
+    r"\d+" => <>.parse::<usize>().unwrap(),
+    r"0x[0-9a-f]+" => usize::from_str_radix(&<>[2..], 16).unwrap(),
+};
+NumericConstant: Arg = Number => Arg::Constant(u16::try_from(<>).unwrap());
+Char: Arg = r"'[\x20-\x7e]'" => Arg::Constant(u16::try_from(u32::from(char::from(<>.as_bytes()[1]))).unwrap());
+UnicodeChar: Arg = r"u'[\x{00}-\x{ffff}]'" => Arg::Constant(u16::try_from(u32::from(<>.chars().nth(2).unwrap())).unwrap());
+Global: Variable = GlobalExp => Variable::Global(u8::try_from(usize::from_str_radix(&<>[1..], 16).unwrap()).unwrap());
+Local: Variable = LocalExp => Variable::Local(u8::try_from(<>[1..].parse::<usize>().unwrap()).unwrap());
+SP: Variable = SPExp => Variable::SP;
+QuotedString: String = r#""(?:[^"\\]|\\.)*""# => <>[1..<>.len() - 1].replace(r#"\""#, r#"""#);
+LabelName: String = Ident => <>.to_string();
+
+Branch: Branch = {
+    "?" <LabelName> => Branch::Labeled { label: <>.to_string(), invert: false, small: false },
+    "?~" <LabelName> => Branch::Labeled { label: <>.to_string(), invert: true, small: false },
+    "%" <LabelName> => Branch::Labeled { label: <>.to_string(), invert: false, small: true },
+    "%~" <LabelName> => Branch::Labeled { label: <>.to_string(), invert: true, small: true },
+    "?0" => Branch::ReturnFalse { invert: false },
+    "?~0" => Branch::ReturnFalse { invert: true },
+    "?1" => Branch::ReturnTrue { invert: false },
+    "?~1" => Branch::ReturnTrue { invert: true },
+};
+
+VariableByReference: Arg = "[" <Variable> "]" => Arg::Variable { var: <>, as_constant: false };
+VariableByValue: Arg = <Variable> => Arg::Variable { var: <>, as_constant: true };
+VariableByConstant: Arg = Number => Arg::Constant(u8::try_from(<>).unwrap().into());
+
+IndirectVariable = {
+    VariableByReference,
+    VariableByValue,
+    VariableByConstant,
+};
+
+Variable = {
+    Global,
+    Local,
+    SP,
+};
+
+Constant = {
+    NumericConstant,
+    Char,
+    UnicodeChar,
+}
+
+Either = {
+    <Variable> => Arg::Variable { var: <>, as_constant: false },
+    Constant,
+};
+
+Any = {
+    Either,
+    "!" <LabelName> => Arg::PackedLabel(<>.to_string()),
+    "&" <LabelName> => Arg::UnpackedLabel(<>.to_string()),
+};
+
+PackedTarget: Arg = {
+    Either,
+    LabelName => Arg::PackedLabel(<>.to_string()),
+};
+
+UnpackedTarget: Arg = {
+    Either,
+    LabelName => Arg::UnpackedLabel(<>.to_string()),
+};
+
+JumpTarget: Arg = {
+    Either,
+    LabelName => Arg::JumpLabel(<>.to_string()),
+};
+
+Store = "->" <Variable>;
+
+pub(crate) Directive: Directive = {
+    rtrue => Directive::Instruction(Opcode::new(Count::Zero, 0x00)),
+    rfalse => Directive::Instruction(Opcode::new(Count::Zero, 0x01)),
+    print <q: QuotedString> => Directive::Instruction(Opcode::new(Count::Zero, 0x02).string(q)),
+    print_ret <q: QuotedString> => Directive::Instruction(Opcode::new(Count::Zero, 0x03).string(q)),
+    nop => Directive::Instruction(Opcode::new(Count::Zero, 0x04)),
+    save <b: Branch> => Directive::Instruction(Opcode::new(Count::Zero, 0x05).branch(b)),
+    restore <b: Branch> => Directive::Instruction(Opcode::new(Count::Zero, 0x06).branch(b)),
+    restart => Directive::Instruction(Opcode::new(Count::Zero, 0x07)),
+    ret_popped => Directive::Instruction(Opcode::new(Count::Zero, 0x08)),
+    pop => Directive::Instruction(Opcode::new(Count::Zero, 0x09)),
+    quit => Directive::Instruction(Opcode::new(Count::Zero, 0x0a)),
+    new_line => Directive::Instruction(Opcode::new(Count::Zero, 0x0b)),
+    show_status => Directive::Instruction(Opcode::new(Count::Zero, 0x0c)),
+    verify <b: Branch> => Directive::Instruction(Opcode::new(Count::Zero, 0x0d).branch(b)),
+    branch <b: Branch> => Directive::Instruction(Opcode::new(Count::Zero, 0x0d).branch(b)),
+    jz <a0: Any> <b: Branch> => Directive::Instruction(Opcode::new(Count::One, 0x00).args(vec![a0]).branch(b)),
+    get_sibling <a0: Any> <s: Store> <b: Branch> => Directive::Instruction(Opcode::new(Count::One, 0x01).args(vec![a0]).branch(b).store(s)),
+    get_child <a0: Any> <s: Store> <b: Branch> => Directive::Instruction(Opcode::new(Count::One, 0x02).args(vec![a0]).branch(b).store(s)),
+    get_parent <a0: Any> <b: Branch> => Directive::Instruction(Opcode::new(Count::One, 0x03).args(vec![a0]).branch(b)),
+    get_prop_len <a0: Any> <b: Branch> => Directive::Instruction(Opcode::new(Count::One, 0x04).args(vec![a0]).branch(b)),
+    inc <a0: IndirectVariable> => Directive::Instruction(Opcode::new(Count::One, 0x05).args(vec![a0])),
+    dec <a0: IndirectVariable> => Directive::Instruction(Opcode::new(Count::One, 0x06).args(vec![a0])),
+    print_addr <a0: UnpackedTarget> => Directive::Instruction(Opcode::new(Count::One, 0x07).args(vec![a0])),
+    remove_obj <a0: Any> => Directive::Instruction(Opcode::new(Count::One, 0x09).args(vec![a0])),
+    print_obj <a0: Any> => Directive::Instruction(Opcode::new(Count::One, 0x0a).args(vec![a0])),
+    ret <a0: Any> => Directive::Instruction(Opcode::new(Count::One, 0x0b).args(vec![a0])),
+    jump <a0: JumpTarget> => Directive::Instruction(Opcode::new(Count::One, 0x0c).args(vec![a0])),
+    print_paddr <a0: PackedTarget> => Directive::Instruction(Opcode::new(Count::One, 0x0d).args(vec![a0])),
+    load <a0: IndirectVariable> <s: Store> => Directive::Instruction(Opcode::new(Count::One, 0x0e).args(vec![a0]).store(s)),
+    not <a0: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::One, 0x0f).args(vec![a0]).store(s)),
+    je <a0: Any> <b: Branch> => Directive::Instruction(Opcode::new(Count::Two, 0x01).args(vec![a0]).branch(b)),
+    je <a0: Any> <a1: Any> <b: Branch> => Directive::Instruction(Opcode::new(Count::Two, 0x01).args(vec![a0, a1]).branch(b)),
+    je <a0: Any> <a1: Any> <a2: Any> <b: Branch> => Directive::Instruction(Opcode::new(Count::Two, 0x01).args(vec![a0, a1, a2]).branch(b)),
+    je <a0: Any> <a1: Any> <a2: Any> <a3: Any> <b: Branch> => Directive::Instruction(Opcode::new(Count::Two, 0x01).args(vec![a0, a1, a2, a3]).branch(b)),
+    jl <a0: Any> <a1: Any> <b: Branch> => Directive::Instruction(Opcode::new(Count::Two, 0x02).args(vec![a0, a1]).branch(b)),
+    jg <a0: Any> <a1: Any> <b: Branch> => Directive::Instruction(Opcode::new(Count::Two, 0x03).args(vec![a0, a1]).branch(b)),
+    dec_chk <a0: IndirectVariable> <a1: Any> <b: Branch> => Directive::Instruction(Opcode::new(Count::Two, 0x04).args(vec![a0, a1]).branch(b)),
+    inc_chk <a0: IndirectVariable> <a1: Any> <b: Branch> => Directive::Instruction(Opcode::new(Count::Two, 0x05).args(vec![a0, a1]).branch(b)),
+    jin <a0: Any> <a1: Any> <b: Branch> => Directive::Instruction(Opcode::new(Count::Two, 0x06).args(vec![a0, a1]).branch(b)),
+    test <a0: Any> <a1: Any> <b: Branch> => Directive::Instruction(Opcode::new(Count::Two, 0x07).args(vec![a0, a1]).branch(b)),
+    or <a0: Any> <a1: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::Two, 0x08).args(vec![a0, a1]).store(s)),
+    and <a0: Any> <a1: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::Two, 0x09).args(vec![a0, a1]).store(s)),
+    test_attr <a0: Any> <a1: Any> <b: Branch> => Directive::Instruction(Opcode::new(Count::Two, 0x0a).args(vec![a0, a1]).branch(b)),
+    set_attr <a0: Any> <a1: Any> => Directive::Instruction(Opcode::new(Count::Two, 0x0b).args(vec![a0, a1])),
+    clear_attr <a0: Any> <a1: Any> => Directive::Instruction(Opcode::new(Count::Two, 0x0c).args(vec![a0, a1])),
+    store <a0: IndirectVariable> <a1: Any> => Directive::Instruction(Opcode::new(Count::Two, 0x0d).args(vec![a0, a1])),
+    insert_obj <a0: Any> <a1: Any> => Directive::Instruction(Opcode::new(Count::Two, 0x0e).args(vec![a0, a1])),
+    loadw <a0: UnpackedTarget> <a1: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::Two, 0x0f).args(vec![a0, a1]).store(s)),
+    loadb <a0: UnpackedTarget> <a1: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::Two, 0x10).args(vec![a0, a1]).store(s)),
+    get_prop <a0: Any> <a1: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::Two, 0x11).args(vec![a0, a1]).store(s)),
+    get_prop_addr <a0: Any> <a1: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::Two, 0x12).args(vec![a0, a1]).store(s)),
+    get_next_prop <a0: Any> <a1: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::Two, 0x13).args(vec![a0, a1]).store(s)),
+    add <a0: Any> <a1: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::Two, 0x14).args(vec![a0, a1]).store(s)),
+    sub <a0: Any> <a1: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::Two, 0x15).args(vec![a0, a1]).store(s)),
+    mul <a0: Any> <a1: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::Two, 0x16).args(vec![a0, a1]).store(s)),
+    div <a0: Any> <a1: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::Two, 0x17).args(vec![a0, a1]).store(s)),
+    mod <a0: Any> <a1: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::Two, 0x18).args(vec![a0, a1]).store(s)),
+    throw <a0: Any> <a1: Any> => Directive::Instruction(Opcode::new(Count::Two, 0x1c).args(vec![a0, a1])),
+    call_vs <a0: PackedTarget> <s: Store> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x00).args(vec![a0]).store(s)),
+    call_vs <a0: PackedTarget> <a1: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x00).args(vec![a0, a1]).store(s)),
+    call_vs <a0: PackedTarget> <a1: Any> <a2: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x00).args(vec![a0, a1, a2]).store(s)),
+    call_vs <a0: PackedTarget> <a1: Any> <a2: Any> <a3: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x00).args(vec![a0, a1, a2, a3]).store(s)),
+    storew <a0: UnpackedTarget> <a1: Any> <a2: Any> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x01).args(vec![a0, a1, a2])),
+    storeb <a0: UnpackedTarget> <a1: Any> <a2: Any> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x02).args(vec![a0, a1, a2])),
+    put_prop <a0: Any> <a1: Any> <a2: Any> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x03).args(vec![a0, a1, a2])),
+    read <a0: Any> <a1: Any> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x04).args(vec![a0, a1])),
+    print_char <a0: Any> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x05).args(vec![a0])),
+    print_num <a0: Any> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x06).args(vec![a0])),
+    random <a0: Any> <s: Store> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x07).args(vec![a0]).store(s)),
+    push <a0: Any> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x08).args(vec![a0])),
+    pull <a0: IndirectVariable> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x09).args(vec![a0])),
+    split_window <a0: Any> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x0a).args(vec![a0])),
+    set_window <a0: Any> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x0b).args(vec![a0])),
+    output_stream <a0: Any> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x13).args(vec![a0])),
+    input_stream <a0: Any> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x14).args(vec![a0])),
+    sound_effect <a0: Any> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x15).args(vec![a0])),
+    sound_effect <a0: Any> <a1: Any> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x15).args(vec![a0, a1])),
+    sound_effect <a0: Any> <a1: Any> <a2: Any> => Directive::Instruction(Opcode::new(Count::Var { double: false }, 0x15).args(vec![a0, a1, a2])),
+
+    start => Directive::Start,
+    align => Directive::DefaultAlign,
+    align <Number> => Directive::Align { alignment: <> },
+    routine <label: LabelName> <nlocals: Number> <values: Number*> => Directive::Routine { <> },
+    status "score" => Directive::Status(StatusType::Score),
+    status "time" => Directive::Status(StatusType::Time),
+    seek <Number> => Directive::Seek { bytes: <> },
+    seekabs <Number> => Directive::SeekAbs { offset: <> },
+    seeknop <Number> => Directive::SeekNop { bytes: <> },
+    seeknopabs <Number> => Directive::SeekNopAbs { offset: <> },
+    label <LabelName> => Directive::Label(<>),
+    alabel <LabelName> => Directive::AlignedLabel(<>),
+    string <QuotedString> => Directive::String(<>),
+    byte <Number+> => Directive::Byte(<>),
+    set_global <g: Global> <n: Number> => Directive::SetGlobal(g, n),
+};
+
+// vim: set filetype=rust :

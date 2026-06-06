@@ -1,0 +1,17 @@
+[package]
+name = "za"
+version = "2.0.0"
+authors = ["Chris Spiegel <cspiegel@gmail.com>"]
+build = "src/asm/parser/build.rs"
+edition = "2021"
+
+[build-dependencies]
+lalrpop = { version = "0.20.0", features = ["lexer", "unicode"] }
+
+[dependencies]
+anyhow = "1"
+chrono = "0.4"
+clap = { version = "4.0.18", features = ["derive", "cargo"] }
+lalrpop-util = { version = "0.20.0", features = ["lexer", "unicode"] }
+positioned-io = "0"
+thiserror = "1"

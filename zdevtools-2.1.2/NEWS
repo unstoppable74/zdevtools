@@ -1,0 +1,29 @@
+2.1.2:
+• [za] Seeking at the end of the file now works.
+• [za] Some opcodes were improperly specified, and are now (hopefully) fixed: pull, set_cursor, sound_effect, check_unicode, and mouse_window.
+
+2.1.1:
+• [za] Fix bug where a preallocated Unicode table interfered with the default object.
+
+2.1.0:
+• [za] Support preallocating a Unicode table for files larger than 64K.
+• [za] New unicode_table directive to allow custom Unicode tables.
+• [za] The assembler can display a suggested unicode_table directive based on discovered Unicode characters.
+• [za] New seekabs and seeknopabs directives.
+• [zd] The maximum number of instructions to decode can now be provided.
+• [zd] An arbitrary starting offset for disassembly can now be provided.
+• [zd] Bytestrings no longer have a quit instruction implicitly appended.
+• [zd] Opcodes which take indirect variable references are now properly displayed.
+
+2.0.2
+• Include license information.
+
+2.0.1
+• [zd] Fix disassembly of instructions which contain both a branch and a store.
+
+2.0.0
+• This is a complete rewrite which broadly feels the same as the fist release, but which has several small differences.
+• [zd] A visual disassembly mode has been added.
+
+20110529
+• Initial release.

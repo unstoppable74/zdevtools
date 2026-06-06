@@ -1,0 +1,13 @@
+The directories za and zd contain the assembler and disassembler. These use
+standard Rust/Cargo project layouts. To build, change into the directory and
+run:
+
+cargo build --release
+
+This will create the executable ./target/debug/za (or zd). At the moment there
+is no install procedure: either run the executables directly from the zdevtools
+directory, or copy them somewhere in your $PATH.
+
+There are Makefiles in the za and zd directories, but these are mostly an aid
+for development, as they simply run "cargo build", which does non-optimized
+debug builds.
